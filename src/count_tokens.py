@@ -42,9 +42,10 @@ def get_articles(filename):
 			text = clean_article(line2)
 			date_str = clean_date(line1)
 			publisher = clean_publisher(line1)
+			url = clean_url(line1)
 
 			if headline and text and date_str:
-				news_tuple = {"headline": headline, "plaintext": text, "date": date_str, "publisher": publisher}
+				news_tuple = {"headline": headline, "plaintext": text, "date": date_str, "publisher": publisher, "url": url}
 				logging.debug('About to yield %s' % str(news_tuple))
 				yield news_tuple
 
@@ -78,6 +79,23 @@ def clean_date(headline_text):
 		logging.error('Could not parse the headline: %s' % headline_text)
 		logging.error('Current parse: %s' % str(headline_els))
 		return datestr
+
+def clean_url(headline_text):
+	"""
+	>>> clean_url('2014040106250000001    201404010625    http://www.forbes.com/sites/gregcaressi/2014/04/01/the-boom-continues-dissecting-himss14/    The Boom Continues : Dissecting HIMSS14 - Forbes')
+	'http://www.forbes.com/sites/gregcaressi/2014/04/01/the-boom-continues-dissecting-himss14/'
+	"""
+	headline_els_t = headline_text.split('\t')
+	headline_els_s = headline_text.split('    ')
+	headline_els = max(headline_els_s, headline_els_t, key=lambda x: len(x))
+
+	try:
+		return headline_els[2]
+
+	except IndexError:
+		logging.error('Could not parse the headline: %s' % headline_text)
+		logging.error('Current parse: %s' % str(headline_els))
+		return ''
 
 def clean_publisher(headline_text):
 	"""
@@ -116,7 +134,7 @@ def clean_publisher(headline_text):
 	except IndexError:
 		logging.error('Could not parse the headline: %s' % headline_text)
 		logging.error('Current parse: %s' % str(headline_els))
-		return headline
+		return ''
 
 def clean_headline(headline_text):
 	"""
@@ -175,7 +193,7 @@ def clean_article(article):
 	if "????" in article: return None #Foreign language
 	article = clean_tags(article)
 	try:
-		article_new = re.sub(r'[^,.a-zA-Z0-9 -]','', article)
+		article_new = re.sub(r'[^,.a-zA-Z0-9 ]','', article)
 		article = article_new
 	except:
 		import pdb; pdb.set_trace()
@@ -187,6 +205,8 @@ def update_progress(progress, current, total):
 	sys.stdout.flush()
 
 def main(outpickle=OUTFILE, indir=IN_DIR):
+	
+
 	logging.debug('entered main)')
 	all_files = [f for f in os.listdir(indir) if 'meta' not in f]
 	l = []
