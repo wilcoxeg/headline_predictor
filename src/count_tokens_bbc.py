@@ -9,12 +9,14 @@ import datetime
 from urlparse import urlparse
 
 FULL_PATH_DATA = '/Users/dima/Documents/cs224u_project/data'
-PUBLISHERS = ['bbc', 'nytimes']
+PUBLISHERS = ['bbc']
+BAD_SPANS = re.compile(r'<span class="cross-head">.*</span>')
+
 OUTFILE = os.path.join(FULL_PATH_DATA, 'reuters/bbc_april.json')
 IN_DIR = os.path.join(FULL_PATH_DATA, 'raw_april')
-BAD_SPANS = re.compile(r'<span class="cross-head">.*</span>')
 TAG_REGEX = re.compile(r'<.*?>')
 VALID_TLDS = [".com", ".co.uk"]
+TERMINATING_TAGS = ['<div class="description">','No joke  ', 'From other news sites', 'Weather presenter']
 # GLOBAL_COUNTS = '../data/counted/global_counts.json'
 
 
@@ -190,6 +192,7 @@ def clean_tags(article):
 	This removes everything between a < and >, basically all html tags.
 	"""
 	without_headers =  BAD_SPANS.sub('', article)
+
 	return TAG_REGEX.sub('', without_headers)
 	# while True:
 	# 	tag_start = article.find('<')
@@ -200,17 +203,26 @@ def clean_tags(article):
 	# return article
 
 def clean_article(article):
+	original = article
 	if not article:
 		return None
-	article = article.replace('\\n', ' ')
 	if "????" in article: return None #Foreign language
+
+	end_index = min([article.find(tag) for tag in TERMINATING_TAGS if article.find(tag)>0] + [len(article)])
+	start_index = article.find('</h1')
+	article = article[start_index:end_index].strip()
+
+
+	article = article.replace('\\n', ' ')
+	article = article.replace('\"', "'")
 	article = clean_tags(article)
 	try:
-		article_new = re.sub(r'[^,.a-zA-Z0-9 ]','', article)
+		article_new = re.sub(r'[^,.a-zA-Z0-9" ]','', article)
 		article = article_new
 	except:
 		import pdb; pdb.set_trace()
-	return article
+
+	return article.strip()
 
 def update_progress(progress, current, total):
 	progress = int(progress)
