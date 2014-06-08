@@ -14,7 +14,7 @@ STEM_COUNTS = os.path.join(FULL_PATH_DATA, 'bbc/bbc_april_total_counts_en.json')
 REPRESENTATIVES = os.path.join(FULL_PATH_DATA, 'bbc/bbc_april_representatives_en.json')
 INV_DOC_COUNTS = os.path.join(FULL_PATH_DATA, 'bbc/bbc_april_inv_doc_counts_en.json')
 RESULT_FILE = os.path.join(FULL_PATH_DATA, 'bbc/bbc_april_total_tfidf_baseline_prediction.json')
-
+OUT_INCORRECT = os.path.join(FULL_PATH_DATA, 'bbc/bbc_incorrect.json')
 
 
 all_headlines = []
@@ -87,7 +87,7 @@ def main(data, total):
 	print "Num correct: %i" % num_correct
 	print "Num incorrect: %i" % num_incorrect
 
-	with open("bbc_incorrect.json",'w') as outf:
+	with open(OUT_INCORRECT,'w') as outf:
 		json.dump(incrt, outf)
 
 
