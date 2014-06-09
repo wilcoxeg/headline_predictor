@@ -14,6 +14,7 @@ STEM_COUNTS = os.path.join(FULL_PATH_DATA, 'bbc/bbc_april_total_counts_en.json')
 REPRESENTATIVES = os.path.join(FULL_PATH_DATA, 'bbc/bbc_april_representatives_en.json')
 INV_DOC_COUNTS = os.path.join(FULL_PATH_DATA, 'bbc/bbc_april_inv_doc_counts_en.json')
 RESULT_FILE = os.path.join(FULL_PATH_DATA, 'bbc/bbc_april_total_tfidf_baseline_prediction.json')
+ALL_HEADLINES_FILE = os.path.join(FULL_PATH_DATA, 'all_headlines.json')
 OUT_INCORRECT = os.path.join(FULL_PATH_DATA, 'bbc/bbc_incorrect.json')
 
 
@@ -31,14 +32,15 @@ def make_stem_counts(text):
 	return C
 
 def get_headlines(data):
-	return [article['headline'] for article in data]
-
+	with open(ALL_HEADLINES_FILE) as inf:
+		all_headlines = json.load(inf)
+	return all_headlines
 
 def assign_headline_tfidf_total(article):
 	article_text = article["plaintext"]
 	stem_counts = make_stem_counts(article_text)
 	ranked_headlines = []
-	for h in all_headlines:
+	for h,i,p in all_headlines:
 
 		tfidf = 0
 		for word in h.split():
@@ -51,9 +53,9 @@ def assign_headline_tfidf_total(article):
 				continue
 			stem_tfidf = math.log10(float(total_docs) / float(inv[stem])) * math.log10(stem_article_count)
 			tfidf += stem_tfidf
-		ranked_headlines += [(h, tfidf)]
-	ranked_headlines.sort(key=lambda x: x[1], reverse=True)
-	return (article, ranked_headlines[:20])
+		ranked_headlines += [(h, i, p, tfidf)]
+	ranked_headlines.sort(key=lambda x: x[3], reverse=True)
+	return (article, ranked_headlines[:60])
 
 
 
@@ -66,10 +68,10 @@ def main(data, total):
 	pool = Pool(1)
 	counter = 0
 	out_data = []
-	for article, possible_headlines in pool.imap(assign_headline_tfidf_total, data):
-		print counter, article["headline"]
+	for article, possible_headlines in pool.imap(assign_headline_tfidf_total, data[:3]):
+		print counter, article["headline"], possible_headlines[0]
 		counter += 1
-		article["tf_idf_prediction"] = possible_headlines
+		article["top_tfidf"] = possible_headlines
 		out_data += [article]
 
 	with open(RESULT_FILE,'w') as outf:
